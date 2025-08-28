@@ -1,9 +1,12 @@
-from binance.client import Client
-import pandas as pd
+import math
+import os
 import time
 from datetime import datetime, timedelta
-import os
 from typing import List
+
+import numpy as np
+import pandas as pd
+from binance.client import Client
 
 # --- CONFIGURATION ---
 API_KEY = "your_api_key"
@@ -127,6 +130,159 @@ def load_klines(file_paths: List[str]):
     klines = df[["open_time", "open", "high", "low", "close", "volume"]].values.tolist()
 
     return klines
+
+
+def generate_dummy_pattern_data(
+    symbol,
+    interval,
+    start_price=65000,
+    increment=50,
+    steps_per_phase=50,
+    total_steps_target=10000,
+    start_date_str="1 Jan 2022",
+    interval_hours=1,
+):
+    """
+    Generates a large dummy dataset by repeating an up-then-down price pattern.
+
+    Args:
+        start_price (float): The starting price for the pattern.
+        increment (float): The amount to change the price at each step.
+        steps_per_phase (int): The number of steps in the upward and downward phases.
+        total_steps_target (int): The total number of klines to generate.
+        start_date_str (str): The starting date for the dataset.
+        interval_hours (int): The interval in hours between each kline.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the generated kline data.
+    """
+    klines = []
+    current_price = start_price
+    start_time = datetime.strptime(start_date_str, "%d %b %Y")
+    interval_delta = timedelta(hours=interval_hours)
+    interval_ms = interval_delta.total_seconds() * 1000
+
+    # Calculate how many times the full pattern needs to repeat
+    pattern_length = 2 * steps_per_phase
+    num_repetitions = math.ceil(total_steps_target / pattern_length)
+
+    global_step_counter = 0
+
+    print(
+        f"Generating {total_steps_target} steps by repeating a {pattern_length}-step pattern..."
+    )
+
+    # --- New outer loop to repeat the pattern ---
+    for _ in range(num_repetitions):
+        # Phase 1: Increasing Price
+        for _ in range(steps_per_phase):
+            open_time = start_time + (global_step_counter * interval_delta)
+            open_time_ms = int(open_time.timestamp() * 1000)
+
+            open_price = current_price
+            close_price = open_price + increment
+            high_price = close_price + np.random.uniform(5, 10)
+            low_price = open_price - np.random.uniform(5, 10)
+
+            # Append kline data...
+            klines.append(
+                [
+                    open_time_ms,
+                    f"{open_price:.2f}",
+                    f"{high_price:.2f}",
+                    f"{low_price:.2f}",
+                    f"{close_price:.2f}",
+                    f"{np.random.uniform(10, 50):.8f}",
+                    open_time_ms + interval_ms - 1,
+                    f"{(np.random.uniform(10, 50) * current_price):.8f}",
+                    np.random.randint(500, 1500),
+                    f"{(np.random.uniform(10, 50) * 0.55):.8f}",
+                    f"{(np.random.uniform(10, 50) * 0.55 * current_price):.8f}",
+                    "0",
+                ]
+            )
+            current_price = close_price
+            global_step_counter += 1
+
+        # Phase 2: Decreasing Price
+        for _ in range(steps_per_phase):
+            open_time = start_time + (global_step_counter * interval_delta)
+            open_time_ms = int(open_time.timestamp() * 1000)
+
+            open_price = current_price
+            close_price = open_price - increment
+            high_price = open_price + np.random.uniform(5, 10)
+            low_price = close_price - np.random.uniform(5, 10)
+
+            # Append kline data...
+            klines.append(
+                [
+                    open_time_ms,
+                    f"{open_price:.2f}",
+                    f"{high_price:.2f}",
+                    f"{low_price:.2f}",
+                    f"{close_price:.2f}",
+                    f"{np.random.uniform(10, 50):.8f}",
+                    open_time_ms + interval_ms - 1,
+                    f"{(np.random.uniform(10, 50) * current_price):.8f}",
+                    np.random.randint(500, 1500),
+                    f"{(np.random.uniform(10, 50) * 0.45):.8f}",
+                    f"{(np.random.uniform(10, 50) * 0.45 * current_price):.8f}",
+                    "0",
+                ]
+            )
+            current_price = close_price
+            global_step_counter += 1
+
+    # Truncate the list to the exact number of steps required
+    final_klines = klines[:total_steps_target]
+
+    # --- Convert to DataFrame (same as before) ---
+    columns = [
+        "open_time",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "close_time",
+        "quote_asset_volume",
+        "number_of_trades",
+        "taker_buy_base_volume",
+        "taker_buy_quote_volume",
+        "ignore",
+    ]
+    df = pd.DataFrame(final_klines, columns=columns)
+    df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
+    df.drop(columns=["ignore"], inplace=True)
+    float_cols = [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "quote_asset_volume",
+        "taker_buy_base_volume",
+        "taker_buy_quote_volume",
+    ]
+    df[float_cols] = df[float_cols].astype(float)
+    df["number_of_trades"] = df["number_of_trades"].astype(int)
+
+    # 2. Save it to a Parquet file, mimicking your saving logic
+    output_dir = f"data/klines/{symbol}/{interval}/"
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{symbol}_{interval}_dummy.parquet")
+
+    df.to_parquet(output_path, index=False)
+
+    print("\n" + "=" * 50)
+    print("✅ Successfully generated and saved dummy dataset to:")
+    print(f"{output_path}")
+    print("=" * 50)
+    print("\nFirst 5 rows of the generated data:")
+    print(df.head())
+    print("\nLast 5 rows of the generated data:")
+    print(df.tail())
 
 
 # download_and_save_klines(symbol, interval, start_str, end_str)

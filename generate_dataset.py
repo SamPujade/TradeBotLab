@@ -10,9 +10,10 @@ Example usage:
 
 import argparse
 import sys
+
 from binance.client import Client
 
-from src.dataset import download_and_save_klines
+from src.dataset import download_and_save_klines, generate_dummy_pattern_data
 
 INTERVAL_MAP = {
     "1m": Client.KLINE_INTERVAL_1MINUTE,
@@ -37,16 +38,25 @@ if __name__ == "__main__":
         description="Download Binance kline data and save to Parquet."
     )
     parser.add_argument(
-        "--symbol", type=str, required=True, help="Trading pair symbol (e.g., BTCUSDT)"
+        "--symbol",
+        type=str,
+        default="BTCUSDT",
+        help="Trading pair symbol (e.g., BTCUSDT)",
     )
     parser.add_argument(
-        "--interval", type=str, required=True, help="Kline interval (e.g., 1m, 1h, 1d)"
+        "--interval", type=str, default="1m", help="Kline interval (e.g., 1m, 1h, 1d)"
     )
     parser.add_argument(
-        "--start", type=str, required=True, help="Start date (e.g., '1 Jan 2022')"
+        "--start",
+        type=str,
+        default="1 Jan 2024",
+        help="Start date (e.g., '1 Jan 2022')",
     )
     parser.add_argument(
-        "--end", type=str, required=True, help="End date (e.g., '1 Jan 2024')"
+        "--end", type=str, default="1 Jan 2025", help="End date (e.g., '1 Jan 2024')"
+    )
+    parser.add_argument(
+        "--dummy", action="store_true", required=False, help="Dummy dataset"
     )
 
     args = parser.parse_args()
@@ -59,6 +69,21 @@ if __name__ == "__main__":
     interval = INTERVAL_MAP[args.interval]
 
     # Call your dataset function
-    download_and_save_klines(
-        symbol=args.symbol, interval=interval, start_str=args.start, end_str=args.end
-    )
+    if args.dummy:
+        generate_dummy_pattern_data(
+            symbol=args.symbol,
+            interval=interval,
+            start_price=65000,
+            increment=50,
+            steps_per_phase=50,
+            total_steps_target=10000,
+            start_date_str="1 Jan 2024",
+            interval_hours=1,
+        )
+    else:
+        download_and_save_klines(
+            symbol=args.symbol,
+            interval=interval,
+            start_str=args.start,
+            end_str=args.end,
+        )

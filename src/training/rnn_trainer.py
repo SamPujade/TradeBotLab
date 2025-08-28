@@ -15,9 +15,6 @@ class RNNTrainer:
     def train_model(
         self,
         klines,
-        symbol="BTCUSDT",  # This can be passed from outside if needed
-        interval=Config.INTERVAL,  # Use Config.INTERVAL
-        limit=None,  # Not used when klines are passed directly
         sequence_length=Config.SEQUENCE_LENGTH,
         epochs=Config.EPOCHS,
         learning_rate=Config.LEARNING_RATE,
@@ -25,11 +22,6 @@ class RNNTrainer:
         weights_folder=Config.WEIGHTS_FOLDER,
     ):
         """Trains the RNN model with the given parameters."""
-
-        # Load klines data
-        # If klines are already provided, no need to fetch or load from file
-        # The original train.py had two paths for klines: direct fetch or load from file.
-        # For a trainer, it's better to receive klines as an argument.
 
         # Split into train/test
         usable_length = len(klines) - sequence_length - Config.PREDICT_STEPS
@@ -43,14 +35,19 @@ class RNNTrainer:
             sequence_length=sequence_length,
             predict_steps=Config.PREDICT_STEPS,
         )
+        train_mean = train_dataset.mean
+        train_std = train_dataset.std
         test_dataset = KlineDataset(
             test_klines,
             sequence_length=sequence_length,
             predict_steps=Config.PREDICT_STEPS,
+            mean=train_mean,
+            std=train_std,
         )
         train_dataloader = DataLoader(
             train_dataset, batch_size=batch_size, shuffle=True
         )
+        test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
         # Initialize and train model
         model = RNN(
@@ -59,9 +56,20 @@ class RNNTrainer:
             num_layers=Config.RNN_NUM_LAYERS,
             output_size=3,  # Output is 3 for BUY/SELL/WAIT
         )
+        print("Starting model training...")
         losses = model.train_model(
             train_dataloader, num_epochs=epochs, learning_rate=learning_rate
         )
+        print("Training complete.")
+
+        # Test trained model
+        print("Starting evaluation on the test set...")
+        test_loss, accuracy, report, _, _ = model.test_model(test_dataloader)
+        print("\n--- Test Results ---")
+        print(f"Test Loss: {test_loss:.4f}")
+        print(f"Test Accuracy: {accuracy:.2%}")
+        print("\nClassification Report:\n", report)
+        print("--------------------\n")
 
         # Generate the training folder if it doesn't exist
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

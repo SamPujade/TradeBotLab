@@ -3,6 +3,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from sklearn.metrics import accuracy_score, classification_report
 from torch.utils.data import Dataset
 
 from config.config import Config
@@ -13,20 +14,27 @@ SEQUENCE_LENGTH = 100
 
 class KlineDataset(Dataset):
     def __init__(
-        self, klines, predict_steps=PREDICT_STEPS, sequence_length=SEQUENCE_LENGTH
+        self,
+        klines,
+        predict_steps=PREDICT_STEPS,
+        sequence_length=SEQUENCE_LENGTH,
+        mean=None,
+        std=None,
     ):
         self.predict_steps = predict_steps
         self.sequence_length = sequence_length
-        self.data = [self.preprocess_kline(kline) for kline in klines]
-        self.data = torch.tensor(self.data, dtype=torch.float32)
+        self.unnormalized_data = torch.tensor(
+            [self.preprocess_kline(kline) for kline in klines], dtype=torch.float32
+        )
 
-        # self.l2_norms = torch.norm(self.data, p=2, dim=1)
-        # self.data = F.normalize(self.data, p=2, dim=1)
-
-        # Feature-wise mean/std normalization
-        self.mean = self.data.mean(dim=0)
-        self.std = self.data.std(dim=0) + 1e-8  # avoid divide-by-zero
-        self.data = (self.data - self.mean) / self.std
+        if mean is None or std is None:
+            self.mean = self.unnormalized_data.mean(dim=0)
+            self.std = self.unnormalized_data.std(dim=0) + 1e-8
+        else:
+            # validation/test set
+            self.mean = mean
+            self.std = std
+        self.data = (self.unnormalized_data - self.mean) / self.std  # normalize
 
     def preprocess_kline(self, kline):
         return [
@@ -37,29 +45,24 @@ class KlineDataset(Dataset):
             float(kline[5]),  # Volume
         ]
 
-    def denormalize(self, values):
-        # norms = self.l2_norms[: values.shape[0]].unsqueeze(1)  # shape: (N, 1)
-        # return values * norms
-
-        return values * self.std[3] + self.mean[3]
-
     def __len__(self):
         return len(self.data) - self.sequence_length - self.predict_steps
 
     def __getitem__(self, idx):
         sequence = self.data[idx : idx + self.sequence_length]
+
         # Determine the action based on future price movement
-        current_price = self.data[
+        current_price = self.unnormalized_data[
             idx + self.sequence_length - 1, 3
         ]  # Last closing price in the sequence
-        future_price = self.data[
+        future_price = self.unnormalized_data[
             idx + self.sequence_length + self.predict_steps - 1, 3
         ]  # Closing price after PREDICT_STEPS
 
         price_change = (future_price - current_price) / current_price
 
         if price_change > Config.ACTION_PREDICTION_THRESHOLD:
-            target_action = 0  # BUY (arbitrary mapping for now)
+            target_action = 0  # BUY
         elif price_change < -Config.ACTION_PREDICTION_THRESHOLD:
             target_action = 1  # SELL
         else:
@@ -94,36 +97,69 @@ class RNN(nn.Module):
         return out
 
     def train_model(self, train_loader, num_epochs=20, learning_rate=0.001):
-        criterion = nn.CrossEntropyLoss()  # Use CrossEntropyLoss for classification
+        criterion = nn.CrossEntropyLoss()  # for classification
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
         losses = []
+        n_batches = len(train_loader)
         for epoch in range(num_epochs):
-            for sequences, targets in train_loader:
+            running_loss = 0.0
+            for i, (sequences, targets) in enumerate(train_loader):
                 sequences = sequences.to(torch.float32)
-                targets = targets.to(
-                    torch.long
-                )  # Targets should be long for CrossEntropyLoss
+                targets = targets.to(torch.long)  # long for CrossEntropyLoss
 
                 optimizer.zero_grad()
                 outputs = self(sequences)
-                # CrossEntropyLoss expects targets as (batch_size) and outputs as (batch_size, num_classes)
-                # No need for targets.view(outputs.shape) here
+                # targets as (batch_size) and outputs as (batch_size, num_classes)
                 loss = criterion(outputs, targets)
                 loss.backward()
                 optimizer.step()
+                running_loss += loss.item()
+                print(
+                    f"\rEpoch [{epoch + 1}/{num_epochs}], Batch [{i + 1}/{n_batches}]",
+                    end="",
+                )
 
-            losses.append(loss.item())
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.6f}")
+            avg_epoch_loss = running_loss / n_batches
+            losses.append(avg_epoch_loss)
+            print(
+                f"\rEpoch [{epoch + 1}/{num_epochs}] --- Average Loss: {avg_epoch_loss:.6f}         "
+            )
 
         return losses
+
+    def test_model(self, test_loader):
+        criterion = nn.CrossEntropyLoss()
+        self.eval()
+
+        total_loss = 0
+        all_preds = []
+        all_labels = []
+        class_names = ["BUY", "SELL", "WAIT"]
+
+        with torch.no_grad():
+            for sequences, labels in test_loader:
+                outputs = self(sequences)
+                loss = criterion(outputs, labels)
+                total_loss += loss.item()
+
+                _, predicted = torch.max(outputs.data, 1)
+                all_preds.extend(predicted.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+
+        avg_loss = total_loss / len(test_loader)
+        accuracy = accuracy_score(all_labels, all_preds)
+        report = classification_report(
+            all_labels, all_preds, target_names=class_names, zero_division=0
+        )
+
+        return avg_loss, accuracy, report, all_labels, all_preds
 
     def predict(self, input_sequence):
         self.eval()
         with torch.no_grad():
             input_sequence = input_sequence.to(torch.float32)
             outputs = self(input_sequence)
-            # Return the action with the highest probability (index)
             return torch.argmax(outputs, dim=1).item()
 
     def save_weights(self, path):

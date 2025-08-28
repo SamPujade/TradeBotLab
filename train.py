@@ -1,14 +1,10 @@
 import argparse  # Import argparse
 import os
 
+from config.config import Config
 from src.dataset import load_klines
 from src.training.rl_trainer import RLTrainer  # Import RLTrainer
 from src.training.rnn_trainer import RNNTrainer
-
-DATA_PATH = (
-    "data/klines/BTCUSDT/1m/BTCUSDT_1m_2024.parquet"  # Still needed for data loading
-)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -24,7 +20,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load klines data
-    file_path = os.path.abspath(DATA_PATH)
+    file_path = os.path.abspath(Config.DATA_PATH)
     klines = load_klines([file_path])
 
     if args.model_type == "rnn":

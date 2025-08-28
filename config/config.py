@@ -17,14 +17,16 @@ class Config:
     PLOTS_DIR = "plots"  # Directory for saving plots
 
     # Training Configuration
+    DATA_PATH = "data/klines/BTCUSDT/1m/BTCUSDT_1m_2024.parquet"
+    # DATA_PATH = "data/klines/BTCUSDT/1m/BTCUSDT_1m_dummy.parquet"
     PREDICT_STEPS = 10
     SEQUENCE_LENGTH = 100
-    BATCH_SIZE = 16
-    EPOCHS = 10
+    BATCH_SIZE = 128
+    EPOCHS = 5
     TEST_RATIO = 0.1
     LEARNING_RATE = 0.001
     WEIGHTS_FOLDER = "data/weights/"
-    ACTION_PREDICTION_THRESHOLD = 0.001  # 0.1% price change for action prediction
+    ACTION_PREDICTION_THRESHOLD = 0.002  # 0.2% price change for action prediction
 
     # RNN Configuration:
     RNN_HIDDEN_SIZE = 64

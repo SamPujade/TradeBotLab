@@ -17,15 +17,6 @@ class Simulator:
         results = []
         for bot in bots:
             print(f"Evaluating BOT: {bot.name}")
-            # The bot's evaluate method will now use the simulator's klines_data
-            # and the Config.N_EVALUATE to run the simulation.
-            # The bot's evaluate method will handle iterating through klines and calling action.
-            # We pass a slice of klines data that the bot can evaluate over.
-            # The N_KLINES is for the initial history the bot might need.
-            # The evaluate method is already defined in base_bot.py
-
-            # The klines passed to bot.evaluate should be the full historical data
-            # from which the bot will extract its necessary observations.
             final_balance, trade_history = bot.evaluate(
                 self.klines_data, Config.N_EVALUATE
             )
@@ -34,8 +25,7 @@ class Simulator:
             plot_trades(
                 self.klines_data,
                 trade_history,
-                starting_index=len(self.klines_data)
-                - Config.N_EVALUATE,  # This should be Config.N_KLINES
+                starting_index=len(self.klines_data) - Config.N_KLINES,
                 filename=plot_filename,
             )
             results.append(

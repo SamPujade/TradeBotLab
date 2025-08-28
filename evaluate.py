@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # Fetch historical data using Binance API
     client = Client(Config.BINANCE_API_KEY, Config.BINANCE_API_SECRET, testnet=False)
     klines = client.get_klines(
-        symbol="BTCUSDT",  # This can be made configurable later
+        symbol="BTCUSDT",
         interval=Config.INTERVAL,
         limit=Config.N_KLINES + Config.N_EVALUATE,
     )
