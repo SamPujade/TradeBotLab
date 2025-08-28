@@ -1,10 +1,13 @@
 # Data folder
 data/
 
+# Plots folder
+plots/
+
 # Images
 *.png
 
-# weights
+# Weights
 *.pth
 
 # Byte-compiled / optimized / DLL files

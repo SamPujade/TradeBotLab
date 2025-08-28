@@ -5,9 +5,6 @@ from datetime import datetime
 
 from src.utils import Action
 
-OUTPUT_FOLDER = "data/outputs/"
-
-
 def plot_trades(klines, trade_history, starting_index=0, filename="evaluate_plot.png"):
     prices = [float(candle[4]) for candle in klines]
     timestamps = [int(candle[0]) for candle in klines]
@@ -48,7 +45,6 @@ def plot_trades(klines, trade_history, starting_index=0, filename="evaluate_plot
 
     plt.gcf().autofmt_xdate()  # Beautify
 
-    filepath = os.path.join(OUTPUT_FOLDER, filename)
-    plt.savefig(filepath)
-    print(f"Plot saved as {filepath}")
+    plt.savefig(filename)
+    print(f"Plot saved as {filename}")
     plt.close()

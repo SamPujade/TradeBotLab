@@ -21,7 +21,7 @@ TEST_RATIO = 0.1
 
 if __name__ == "__main__":
 
-    file_paths = glob.glob("data/BTCUSDT/1m/BTCUSDT_1m_2024.parquet")
+    file_paths = glob.glob("data/klines/BTCUSDT/1m/BTCUSDT_1m_2024.parquet")
     df = pd.concat(
         [pd.read_parquet(path) for path in sorted(file_paths)], ignore_index=True
     )
