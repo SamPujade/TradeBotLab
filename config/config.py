@@ -18,20 +18,20 @@ class Config:
 
     # Training Configuration
     DATA_PATH = "data/klines/BTCUSDT/1m/BTCUSDT_1m_2024.parquet"
-    # DATA_PATH = "data/klines/BTCUSDT/1m/BTCUSDT_1m_dummy.parquet"
     PREDICT_STEPS = 10
     SEQUENCE_LENGTH = 100
     BATCH_SIZE = 128
-    EPOCHS = 5
+    EPOCHS = 2
     TEST_RATIO = 0.1
     LEARNING_RATE = 0.001
+    CLASS_WEIGHTS = [8, 8, 1.2]
     WEIGHTS_FOLDER = "data/weights/"
     ACTION_PREDICTION_THRESHOLD = 0.002  # 0.2% price change for action prediction
 
     # RNN Configuration:
     RNN_HIDDEN_SIZE = 64
     RNN_NUM_LAYERS = 2
-    RNN_MODEL_PATH = "data/weights/20250828_192910/btc_rnn_weights.pth"
+    RNN_MODEL_PATH = "data/weights/20250828_222935/btc_rnn_weights.pth"
 
     # RL Configuration:
     RL_GAMMA = 0.99

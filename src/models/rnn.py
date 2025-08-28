@@ -8,16 +8,13 @@ from torch.utils.data import Dataset
 
 from config.config import Config
 
-PREDICT_STEPS = 10
-SEQUENCE_LENGTH = 100
-
 
 class KlineDataset(Dataset):
     def __init__(
         self,
         klines,
-        predict_steps=PREDICT_STEPS,
-        sequence_length=SEQUENCE_LENGTH,
+        predict_steps=Config.PREDICT_STEPS,
+        sequence_length=Config.SEQUENCE_LENGTH,
         mean=None,
         std=None,
     ):
@@ -88,7 +85,7 @@ class RNN(nn.Module):
             hidden_size, output_size
         )  # Output raw logits for classification
 
-        weights = torch.tensor([1.0 / 0.1, 1.0 / 0.1, 1.0 / 0.8], dtype=torch.float32)
+        weights = torch.tensor(Config.CLASS_WEIGHTS, dtype=torch.float32)
         self.criterion = nn.CrossEntropyLoss(weight=weights)  # for classification
 
     def forward(self, x):
