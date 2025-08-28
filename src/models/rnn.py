@@ -88,6 +88,9 @@ class RNN(nn.Module):
             hidden_size, output_size
         )  # Output raw logits for classification
 
+        weights = torch.tensor([1.0 / 0.1, 1.0 / 0.1, 1.0 / 0.8], dtype=torch.float32)
+        self.criterion = nn.CrossEntropyLoss(weight=weights)  # for classification
+
     def forward(self, x):
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
@@ -97,7 +100,6 @@ class RNN(nn.Module):
         return out
 
     def train_model(self, train_loader, num_epochs=20, learning_rate=0.001):
-        criterion = nn.CrossEntropyLoss()  # for classification
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
 
         losses = []
@@ -111,7 +113,7 @@ class RNN(nn.Module):
                 optimizer.zero_grad()
                 outputs = self(sequences)
                 # targets as (batch_size) and outputs as (batch_size, num_classes)
-                loss = criterion(outputs, targets)
+                loss = self.criterion(outputs, targets)
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item()
@@ -129,7 +131,6 @@ class RNN(nn.Module):
         return losses
 
     def test_model(self, test_loader):
-        criterion = nn.CrossEntropyLoss()
         self.eval()
 
         total_loss = 0
@@ -140,7 +141,7 @@ class RNN(nn.Module):
         with torch.no_grad():
             for sequences, labels in test_loader:
                 outputs = self(sequences)
-                loss = criterion(outputs, labels)
+                loss = self.criterion(outputs, labels)
                 total_loss += loss.item()
 
                 _, predicted = torch.max(outputs.data, 1)

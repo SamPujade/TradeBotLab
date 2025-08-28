@@ -1,9 +1,10 @@
-import os
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 from datetime import datetime
 
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+
 from src.utils import Action
+
 
 def plot_trades(klines, trade_history, starting_index=0, filename="evaluate_plot.png"):
     prices = [float(candle[4]) for candle in klines]

@@ -23,10 +23,11 @@ class RNNBot(Bot):
             output_size=3,  # 3 actions: BUY, SELL, WAIT
         )
 
-        if model_path:
+        try:
             self.model.load_weights(model_path)
-        else:
-            print("Warning: No model weights loaded!")
+        except Exception as err:
+            print("Failed to load weights")
+            raise err
 
     def action(self, klines):
         # Ensure enough klines for a sequence

@@ -5,7 +5,6 @@ from binance.client import Client
 from config.config import Config
 from src.bots.profit_bot import ProfitBot
 from src.bots.random_bot import RandomBot
-from src.bots.rl_bot import RLBot  # Import RLBot
 from src.bots.rnn_bot import RNNBot
 from src.simulation.simulator import Simulator  # Import Simulator
 
@@ -28,12 +27,12 @@ if __name__ == "__main__":
             balance=Config.INITIAL_BALANCE,
             model_path=Config.RNN_MODEL_PATH,
         ),
-        RLBot(
-            balance=Config.INITIAL_BALANCE,
-            state_size=Config.N_KLINES * 5,  # Needs to match environment's state size
-            action_size=3,  # BUY, SELL, HOLD
-            seed=42,  # Or make configurable
-        ),
+        # RLBot(
+        #     balance=Config.INITIAL_BALANCE,
+        #     state_size=Config.N_KLINES * 5,  # Needs to match environment's state size
+        #     action_size=3,  # BUY, SELL, HOLD
+        #     seed=42,  # Or make configurable
+        # ),
     ]
 
     simulator = Simulator(klines)

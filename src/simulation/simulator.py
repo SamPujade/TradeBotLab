@@ -25,7 +25,7 @@ class Simulator:
             plot_trades(
                 self.klines_data,
                 trade_history,
-                starting_index=len(self.klines_data) - Config.N_KLINES,
+                starting_index=len(self.klines_data) - Config.N_EVALUATE,
                 filename=plot_filename,
             )
             results.append(

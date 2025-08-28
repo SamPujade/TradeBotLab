@@ -31,7 +31,7 @@ class Config:
     # RNN Configuration:
     RNN_HIDDEN_SIZE = 64
     RNN_NUM_LAYERS = 2
-    RNN_MODEL_PATH = "data/weights/20250326_112452/btc_rnn_weigths.pth"  # Default path for RNN model weights
+    RNN_MODEL_PATH = "data/weights/20250828_192910/btc_rnn_weights.pth"
 
     # RL Configuration:
     RL_GAMMA = 0.99
