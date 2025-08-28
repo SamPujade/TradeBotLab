@@ -7,16 +7,21 @@ This project provides a framework for creating and simulating crypto trading bot
 *   `pyproject.toml`: Project metadata and dependencies.
 *   `evaluate.py`: Script to run simulations and evaluate bot performance.
 *   `generate_dataset.py`: Script to generate datasets for model training.
-*   `rnn_test.py`: Script for testing RNN models.
 *   `train.py`: Script for training models.
+*   `config/`:
+    *   `config.py`: Configuration script storing hyperparameters.
+*   `data/`: Contains data files (ignored).
+    *   `klines/`: Storage of klines data by symbol and interval.
+    *   `outputs/`: Storage of evaluation plots and other visual data.
+    *   `weights/`: Storage of model weights.
 *   `src/`: Contains core application logic.
-    *   `bot.py`: Defines base `Bot` class and various bot implementations (e.g., `RandomBot`, `ProfitBot`, `RNNBot`).
+    *   `bot/`: Defines base `Bot` class and various bot implementations (e.g., `RandomBot`, `ProfitBot`, `RNNBot`, `RLBot`).
+    *   `models/`: Core architecture of ML and DL models.
+    *   `simulation/`: Trading simulation logic.
+    *   `training/`: Training and testing implementation for models.
     *   `dataset.py`: Handles data loading and processing for models.
-    *   `trader.py`: (Currently a placeholder) Intended for real-time trading logic.
     *   `utils.py`: Utility functions and enums (e.g., `Action`).
     *   `visualization.py`: Functions for plotting trade history.
-    *   `models/`: Contains machine learning model definitions.
-        *   `rnn.py`: Recurrent Neural Network model definition.
 
 ## Setup
 
