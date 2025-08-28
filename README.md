@@ -31,7 +31,7 @@ This project provides a framework for creating and simulating crypto trading bot
     ```
 
 2.  **Binance API Credentials**:
-    Update `API_KEY` and `API_SECRET` in `evaluate.py` and `train.py` with your Binance API credentials. For simulation, testnet credentials are recommended.
+    Update `API_KEY` and `API_SECRET` in `.env` with your Binance API credentials.
 
 ## Usage
 
@@ -43,21 +43,21 @@ This project provides a framework for creating and simulating crypto trading bot
 
 *   **Train Models**:
     ```bash
-    python train.py
+    uv run train.py --model_type rnn
     ```
-    (Further instructions on model training should be added here once implemented.)
+    Available model types are `rnn` and `rl`.
 
 *   **Generate Dataset**:
     ```bash
     python generate_dataset.py
     ```
-    (Further instructions on dataset generation should be added here once implemented.)
 
 ## Bots Implemented
 
 *   **RandomBot**: Makes random buy/sell/wait decisions.
 *   **ProfitBot**: Implements a rule-based strategy with target profit, stop loss, and missed profit logic.
-*   **RNNBot**: Uses a Recurrent Neural Network to predict price movements and make trading decisions.
+*   **RNNBot**: Uses a Recurrent Neural Network to predict trading decision.
+*   **RLBot**: Uses a Reinforcement Learning agent to predict trading decision.
 
 ## Future Improvements
 
